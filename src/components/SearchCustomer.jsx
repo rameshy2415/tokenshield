@@ -5,18 +5,20 @@ import { customerAPI } from '../services/apiService';
 import {ApplicationContext} from '../context/ApplicationContext';
 
 const SearchCustomer = () => {
-  const {loading, setLoading, error, setError} = useContext(ApplicationContext)
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('customerName');
+  const [customerIdQuery, setCustomerIdQuery] = useState('');
   const [customerData, setCustomerData] = useState(null);
- 
 
+
+  const {loading,setLoading, error, setError } = useContext(ApplicationContext)
 
   const handleSearch = async (e) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
-      setError('Please enter a search term');
+    // Check if either search query or customer ID is provided
+    if (!searchQuery.trim() && !customerIdQuery.trim()) {
+      setError('Please enter either a search term or customer ID');
       return;
     }
 
@@ -25,11 +27,20 @@ const SearchCustomer = () => {
     setCustomerData(null);
 
     try {
-      const searchParams = {
-        [searchType]: searchQuery.trim()
-      };
+      let searchParams = {};
+      let response ;
+      // If customer ID is provided, use it (priority over other search)
+      if (customerIdQuery.trim()) {
+         response = await customerAPI.searchCustomerById(customerIdQuery.trim());
+      } else {
+        // Otherwise use the regular search
+        searchParams = {
+          [searchType]: searchQuery.trim()
+        };
+         response = await customerAPI.searchCustomerByToken(searchParams);
+      }
       
-      const response = await customerAPI.searchCustomerByToken(searchParams);
+     
 
       if (response.data) {
         setCustomerData(response.data);
@@ -50,6 +61,7 @@ const SearchCustomer = () => {
 
   const handleReset = () => {
     setSearchQuery('');
+    setCustomerIdQuery('');
     setCustomerData(null);
     setError('');
   };
@@ -63,45 +75,79 @@ const SearchCustomer = () => {
 
       {/* Search Form */}
       <div className="mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <label htmlFor="searchType" className="block text-sm font-medium text-gray-700 mb-2">
-              Search By
-            </label>
-            <select
-              id="searchType"
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        {/* Customer ID Search - Optional */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-lg font-medium text-blue-800 mb-3">Quick Search by Customer ID</h3>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={customerIdQuery}
+                onChange={(e) => setCustomerIdQuery(e.target.value)}
+                className="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter Customer ID (optional)"
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={loading || !customerIdQuery.trim()}
+              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="customerName">Customer Name</option>
-              <option value="customerEmail">Email</option>
-              <option value="customerPhone">Mobile Number</option>
-              <option value="customerAccountNumber">Account Number</option>
-              <option value="customerAddress">Customer Address</option>
-            </select>
-          </div>
-          
-          <div className="flex-2">
-            <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-2">
-              Search Term
-            </label>
-            <input
-              type="text"
-              id="searchQuery"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder={`Enter ${searchType === 'customerName' ? 'customer name' : searchType === 'email' ? 'email address' : searchType === 'mobileNo' ? 'mobile number' : 'account number'}`}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-            />
+              Search by ID
+            </button>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-4">
+        {/* OR Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-1 border-t border-gray-300"></div>
+          <span className="px-4 text-gray-500 font-medium">OR</span>
+          <div className="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        {/* Regular Search */}
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-800 mb-3">Search by Other Fields</h3>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <label htmlFor="searchType" className="block text-sm font-medium text-gray-700 mb-2">
+                Search By
+              </label>
+              <select
+                id="searchType"
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="customerName">Customer Name</option>
+                <option value="email">Email</option>
+                <option value="mobileNo">Mobile Number</option>
+                <option value="bankAccountNo">Account Number</option>
+              </select>
+            </div>
+            
+            <div className="flex-2">
+              <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-2">
+                Search Term
+              </label>
+              <input
+                type="text"
+                id="searchQuery"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder={`Enter ${searchType === 'customerName' ? 'customer name' : searchType === 'email' ? 'email address' : searchType === 'mobileNo' ? 'mobile number' : 'account number'}`}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
           <button
             onClick={handleSearch}
-            disabled={loading}
+            disabled={loading || (!searchQuery.trim() && !customerIdQuery.trim())}
             className="flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
           >
             {loading ? (
@@ -141,22 +187,22 @@ const SearchCustomer = () => {
             
             <div className="bg-white p-4 rounded-md shadow-sm">
               <label className="block text-sm font-medium text-gray-600">Bank Account Number</label>
-              <p className="mt-1 text-gray-900 font-medium">{customerData.customerAccountNumber}</p>
+              <p className="mt-1 text-gray-900 font-medium">{customerData.bankAccountNo}</p>
             </div>
             
             <div className="bg-white p-4 rounded-md shadow-sm">
               <label className="block text-sm font-medium text-gray-600">Email Address</label>
-              <p className="mt-1 text-gray-900 font-medium">{customerData.customerEmail}</p>
+              <p className="mt-1 text-gray-900 font-medium">{customerData.email}</p>
             </div>
             
             <div className="bg-white p-4 rounded-md shadow-sm">
               <label className="block text-sm font-medium text-gray-600">Mobile Number</label>
-              <p className="mt-1 text-gray-900 font-medium">{customerData.customerPhone}</p>
+              <p className="mt-1 text-gray-900 font-medium">{customerData.mobileNo}</p>
             </div>
             
             <div className="bg-white p-4 rounded-md shadow-sm md:col-span-2">
               <label className="block text-sm font-medium text-gray-600">Address</label>
-              <p className="mt-1 text-gray-900">{customerData.customerAddress}</p>
+              <p className="mt-1 text-gray-900">{customerData.address}</p>
             </div>
           </div>
         </div>

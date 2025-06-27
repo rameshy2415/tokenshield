@@ -44,25 +44,10 @@ api.interceptors.response.use(
 export const customerAPI = {
   createCustomer: customerData => api.post('/cid/customer', customerData),
   searchCustomer: (searchParams) => api.get('/cid/token/',{ params: searchParams }),
-   //searchCustomerByToken: (searchParams) => api.get(`/cid/token/${searchParams}`),
-   searchCustomerByToken: (searchParams) => api.post('/cid/detokenize',searchParams),
+  searchCustomerByToken: (searchParams) => api.post('/cid/detokenize',searchParams),
+  searchCustomerById: (id) => api.get(`/cid/customer/${id}`),
 };
 
-// Expenses API calls
-export const expenseAPI = {
-  getExpenses: () => api.get('/expenses'),
-  addExpense: expenseData => api.post('/expenses', expenseData),
-  updateExpense: (id, expenseData) => api.put(`/expenses/${id}`, expenseData),
-  deleteExpense: id => api.delete(`/expenses/${id}`)
-};
-
-// Receive money API calls
-export const receiveMoneyAPI = {
-  getReceivedMoney: () => api.get('/receivemoney'),
-  addReceivedMoney: receiveMoneyData => api.post('/receivemoney', receiveMoneyData),
-  updateReceivedMoney: (id, receiveMoneyData) => api.put(`/receivemoney/${id}`, receiveMoneyData),
-  deleteReceivedMoney: id => api.delete(`/receivemoney/${id}`)
-};
 
 // Send Mail API calls
 export const sendEmailAPI = {
