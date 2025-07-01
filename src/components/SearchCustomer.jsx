@@ -4,11 +4,15 @@ import { Search, User, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { customerAPI } from '../services/apiService';
 import {ApplicationContext} from '../context/ApplicationContext';
 
+import { useToast } from '../hooks/useToast';
+
 const SearchCustomer = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('customerName');
   const [customerIdQuery, setCustomerIdQuery] = useState('');
   const [customerData, setCustomerData] = useState(null);
+
+  const { showSuccess, showError } = useToast();
 
 
   const {loading,setLoading, error, setError } = useContext(ApplicationContext)
@@ -44,8 +48,10 @@ const SearchCustomer = () => {
 
       if (response.data) {
         setCustomerData(response.data);
+        showSuccess("Successfully retrieved customer data")
       } else {
         setError('No customer found with the provided search criteria');
+        showError("No customer found with the provided search criteria")
       }
     } catch (error) {
       console.error('Error searching customer:', error);
